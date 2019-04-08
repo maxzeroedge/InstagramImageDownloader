@@ -45,4 +45,31 @@ class InstagramImageDownloader{
             .setFirefoxOptions(/* ... */)
             .build(); 
     }
+
+    get_image_list(self, depth=10){
+        let image_list = {}
+        let self = this
+        try{
+            self.setup()
+            // # Load whole page
+            self.load_more(depth)
+            // # The image tags we need to worry about
+            let img_elements = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.TAG_NAME, "article"))
+            )
+            img_elements = img_elements.find_elements_by_tag_name('a')
+            // # image_list = [img.get_attribute('src') for img in img_elements]
+            img_elements.forEach((img, key)=>{
+                const img_img = img.find_elements_by_tag_name('img')
+                if(len(img_img) > 0){
+                    const link = img.get_attribute('href')
+                    const src = img_img[0].get_attribute('src')
+                    image_list[link] = src
+                }
+            })
+        } finally{
+            self.driver.quit()
+        }
+        return image_list
+    }
 }
