@@ -77,6 +77,7 @@ class InstagramImageDownloader{
                                         }
                                         if(image_count == Object.keys(image_list).length){
                                             console.log(image_list)
+                                            self.driver.quit()
                                             resolve(image_list)
                                         }
                                     })
@@ -88,7 +89,6 @@ class InstagramImageDownloader{
                 await fetcher()
             } catch(err){
                 console.log(err)
-            } finally{
                 self.driver.quit()
             }
             mainResolve(image_list)
