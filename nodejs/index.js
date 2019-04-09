@@ -23,6 +23,7 @@ class InstagramImageDownloader{
     setup_chrome(self){
         let chromeCapabilities = Webdriver.Capabilities.chrome();
         // Setting browser to be incognito and headless
+        // Remove headless if facing issues
         let chromeOptions = {
             'args': ['--headless', '--incognito']
         };
@@ -50,53 +51,48 @@ class InstagramImageDownloader{
     }
 
     async get_image_list(depth=10){
-        let image_list = {}
-        let waitForIt = false
-        let self = this
-        try{
-            self.setup()
-            async function fetcher() {
-                return new Promise((resolve, reject)=>{
-                    // # Load whole page
-                    // self.load_more(depth)
-                    // # The image tags we need to worry about
-                    let img_elements = self.driver.wait(Until.elementLocated(By.css("article")), 10000)
-                    img_elements.then((img_elements)=>{
-                        img_elements = img_elements.findElements(By.css('a'))
+        return new Promise(async (mainResolve, mainReject)=>{
+            let image_list = {}
+            let waitForIt = false
+            let self = this
+            try{
+                self.setup()
+                async function fetcher() {
+                    return new Promise((resolve, reject)=>{
+                        // # Load whole page
+                        // self.load_more(depth)
+                        // # The image tags we need to worry about
+                        let img_elements = self.driver.wait(Until.elementLocated(By.css("article")), 10000)
                         img_elements.then((img_elements)=>{
-                            // # image_list = [img.get_attribute('src') for img in img_elements]
-                            const image_count = img_elements.length;
-                            img_elements.forEach((img, key)=>{
-                                img.findElements(By.css('img')).then(async (img_img)=>{
-                                    if(img_img.length > 0){
-                                        const link = await img.getAttribute('href')
-                                        const src = await img_img[0].getAttribute('src')
-                                        image_list[link] = src
-                                    }
-                                    if(image_count == Object.keys(image_list)){
-                                        resolve(image_list)
-                                    }
+                            img_elements = img_elements.findElements(By.css('a'))
+                            img_elements.then((img_elements)=>{
+                                // # image_list = [img.get_attribute('src') for img in img_elements]
+                                const image_count = img_elements.length;
+                                img_elements.forEach((img, key)=>{
+                                    img.findElements(By.css('img')).then(async (img_img)=>{
+                                        if(img_img.length > 0){
+                                            const link = await img.getAttribute('href')
+                                            const src = await img_img[0].getAttribute('src')
+                                            image_list[link] = src
+                                        }
+                                        if(image_count == Object.keys(image_list).length){
+                                            console.log(image_list)
+                                            resolve(image_list)
+                                        }
+                                    })
                                 })
-                            })
+                            }).catch(err=>reject)
                         }).catch(err=>reject)
-                    }).catch(err=>reject)
-                })
-            }
-            image_list = await fetcher()
-            console.log(image_list)
-            /* waitForIt = Object.keys(image_list).length != image_count
-            const intervalTimer = setInterval(()=>{
-                if(Object.keys(image_list).length == image_count){
-                    clearInterval(intervalTimer);
-                    self.driver.quit()
+                    })
                 }
-            }, 500); */
-        } catch(err){
-            console.log(err)
-        } finally{
-            self.driver.quit()
-        }
-        return image_list
+                await fetcher()
+            } catch(err){
+                console.log(err)
+            } finally{
+                self.driver.quit()
+            }
+            mainResolve(image_list)
+        })
     }
 }
 
