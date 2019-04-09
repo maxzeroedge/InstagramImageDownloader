@@ -62,3 +62,4 @@ typings/
 
 **/downloads
 pnpm**
+.vscode
