@@ -60,7 +60,7 @@ class InstagramImageDownloader{
                 async function fetcher() {
                     return new Promise((resolve, reject)=>{
                         // # Load whole page
-                        // self.load_more(depth)
+                        self.load_more(depth)
                         // # The image tags we need to worry about
                         let img_elements = self.driver.wait(Until.elementLocated(By.css("article")), 10000)
                         img_elements.then((img_elements)=>{
@@ -93,6 +93,44 @@ class InstagramImageDownloader{
             }
             mainResolve(image_list)
         })
+    }
+    
+    load_more(depth=null, mainResolve=null){
+        let self = this
+        const callback = (resolve) => {
+            if(depth == 0){
+                return
+            }
+            self.driver.executeScript("window.scrollTo(0, document.body.scrollHeight);")
+            try{
+                // # Wait for the loading spinner to arrive
+                self.driver.wait(Until.elementLocated(By.css("svg")), 10000).then(()=>{
+                    // # Wait for it to go away
+                    let intervalTimer = setInterval(() => {
+                        self.driver.findElement(By.css('svg')).then((svg_found)=>{
+                            if(!svg_found || svg_found.length == 0){
+                                clearInterval(intervalTimer)
+                                if(depth != null){
+                                    depth -= 1
+                                    console.log("Scrolls remaining: {}".format(depth))
+                                }
+                                self.load_more(depth)
+                            }
+                        })
+                        
+                    }, 1000);
+                })
+            } catch(e){
+                console.error(e)
+            }
+        }
+        if(mainResolve==null){
+            return new Promise((resolve, reject) => {
+                callback(resolve)
+            })
+        } else {
+            callback(mainResolve)
+        }
     }
 }
 
